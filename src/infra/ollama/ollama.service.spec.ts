@@ -37,4 +37,30 @@ describe('OllamaService', () => {
       ServiceUnavailableException,
     );
   });
+
+  it('sends the prompt to the answer model and returns its text', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ response: 'An answer' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(service.generate('hello')).resolves.toBe('An answer');
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe('http://ollama.test/api/generate');
+    expect(JSON.parse(options.body)).toEqual({
+      model: 'llama3.2',
+      prompt: 'hello',
+      stream: false,
+    });
+  });
+
+  it('throws when Ollama cannot write the answer', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+
+    await expect(service.generate('hello')).rejects.toThrow(
+      ServiceUnavailableException,
+    );
+  });
 });
