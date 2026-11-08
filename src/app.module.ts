@@ -8,6 +8,7 @@ import { validateEnv } from './config/env.js';
 import { HealthController } from './health/health.controller.js';
 import { OllamaModule } from './infra/ollama/ollama.module.js';
 import { PrismaModule } from './infra/prisma/prisma.module.js';
+import { AskModule } from './modules/ask/ask.module.js';
 import { IngestModule } from './modules/ingest/ingest.module.js';
 import { SearchModule } from './modules/search/search.module.js';
 
@@ -23,6 +24,7 @@ import { SearchModule } from './modules/search/search.module.js';
     ErrorLoggerModule,
     IngestModule,
     SearchModule,
+    AskModule,
   ],
   controllers: [HealthController],
   providers: [
