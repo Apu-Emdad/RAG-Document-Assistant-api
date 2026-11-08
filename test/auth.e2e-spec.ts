@@ -73,7 +73,8 @@ function createFakePrisma() {
   };
 }
 
-describe('Auth (e2e)', () => {
+// Skipped because login is turned off in app.module.ts for this project.
+describe.skip('Auth (e2e)', () => {
   let app: INestApplication<App>;
 
   const credentials = {

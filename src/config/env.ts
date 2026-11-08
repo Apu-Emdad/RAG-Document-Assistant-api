@@ -4,6 +4,7 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsPositive,
   IsString,
   IsUrl,
@@ -24,10 +25,13 @@ export class Env {
   @IsUrl({ protocols: ['postgres', 'postgresql'], require_tld: false })
   DATABASE_URL: string;
 
+  // Redis, JWT and SMTP values are optional while those features are turned off.
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   REDIS_HOST: string;
 
+  @IsOptional()
   @IsInt()
   @IsPositive()
   REDIS_PORT: number;
@@ -38,6 +42,7 @@ export class Env {
   @Max(15)
   REDIS_DB: number = 0;
 
+  @IsOptional()
   @IsString()
   @MinLength(32)
   JWT_ACCESS_SECRET: string;
@@ -47,6 +52,7 @@ export class Env {
   @IsPositive()
   JWT_ACCESS_EXPIRES_IN: number = 900;
 
+  @IsOptional()
   @IsString()
   @MinLength(32)
   JWT_REFRESH_SECRET: string;
@@ -64,6 +70,7 @@ export class Env {
   @IsUrl({ require_tld: false })
   WEB_URL: string = 'http://localhost:5001';
 
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   SMTP_HOST: string;
@@ -73,15 +80,18 @@ export class Env {
   @IsPositive()
   SMTP_PORT: number = 587;
 
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   SMTP_USER: string;
 
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   SMTP_PASS: string;
 
   // Sender shown in emails, e.g. "My App <no-reply@example.com>"
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   MAIL_FROM: string;
