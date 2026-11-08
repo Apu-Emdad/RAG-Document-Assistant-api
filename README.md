@@ -26,6 +26,19 @@ flowchart TD
     end
 
     db --> closest
+
+    classDef embed fill:#2563eb,stroke:#1e40af,color:#ffffff
+    classDef llm fill:#16a34a,stroke:#166534,color:#ffffff
+    classDef store fill:#ea580c,stroke:#9a3412,color:#ffffff
+    classDef step fill:#475569,stroke:#334155,color:#ffffff
+
+    class embedChunks,embedQuestion embed
+    class llama llm
+    class db store
+    class files,chunks,question,closest,answer step
+
+    style Ingest fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
+    style Question fill:#e2e8f0,stroke:#94a3b8,color:#0f172a
 ```
 
 **1. Ingest** runs once, and again when your documents change:
