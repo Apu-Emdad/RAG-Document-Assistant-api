@@ -1,12 +1,14 @@
 // Design and rationale: docs/schema.md
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 model Role {
@@ -108,4 +110,14 @@ model Employee {
 
   @@index([teamId])
   @@map("employees")
+}
+
+// Embedding has 768 numbers, the size nomic-embed-text returns. Read and written with raw SQL only.
+model Chunk {
+  id        BigInt                     @id @default(autoincrement())
+  content   String
+  source    String
+  embedding Unsupported("vector(768)")
+
+  @@map("chunks")
 }
