@@ -10,7 +10,7 @@ Docker runs only Postgres and Ollama. The API runs directly on your computer.
 
 | Service                   | Port on your computer    | Container                         |
 | ------------------------- | ------------------------ | --------------------------------- |
-| Postgres 18 with pgvector | `5433` (`POSTGRES_PORT`) | `rag-document-assistant-postgres` |
+| Postgres 18 with pgvector | `5444` (`POSTGRES_PORT`) | `rag-document-assistant-postgres` |
 | Ollama                    | `11434`                  | `rag-document-assistant-ollama`   |
 | API                       | `5000` (`PORT`)          | none                              |
 
@@ -71,9 +71,9 @@ docker compose down -v
 | Field    | Value                                |
 | -------- | ------------------------------------ |
 | Host     | `localhost`                          |
-| Port     | `5433` (`POSTGRES_PORT`)             |
+| Port     | `5444` (`POSTGRES_PORT`)             |
 | Database | `document-assistant` (`POSTGRES_DB`) |
 | User     | `admin` (`POSTGRES_USER`)            |
 | Password | `admin` (`POSTGRES_PASSWORD`)        |
 
-Or use this URL: `jdbc:postgresql://localhost:5433/document-assistant`
+Or use this URL: `jdbc:postgresql://localhost:5444/document-assistant`

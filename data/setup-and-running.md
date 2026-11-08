@@ -10,7 +10,7 @@ Docker runs two services for this project: Postgres with pgvector, and Ollama. P
 
 ## Ports
 
-The API uses port 5000. Postgres uses port 5433 on your computer. Ollama uses port 11434. The web app uses port 5001, and it is the only website allowed to call the API through CORS.
+The API uses port 5000. Postgres uses port 5444 on your computer. Ollama uses port 11434. The web app uses port 5001, and it is the only website allowed to call the API through CORS.
 
 ## Container names
 
