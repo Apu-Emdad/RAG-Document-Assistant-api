@@ -9,6 +9,7 @@ import { HealthController } from './health/health.controller.js';
 import { OllamaModule } from './infra/ollama/ollama.module.js';
 import { PrismaModule } from './infra/prisma/prisma.module.js';
 import { IngestModule } from './modules/ingest/ingest.module.js';
+import { SearchModule } from './modules/search/search.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { IngestModule } from './modules/ingest/ingest.module.js';
     OllamaModule,
     ErrorLoggerModule,
     IngestModule,
+    SearchModule,
   ],
   controllers: [HealthController],
   providers: [
