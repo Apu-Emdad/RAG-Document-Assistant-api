@@ -24,7 +24,7 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "docker:deps": "docker compose up postgres redis migrate"
+    "docker:deps": "docker compose up -d postgres ollama"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
