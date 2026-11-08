@@ -4,7 +4,7 @@ The RAG Document Assistant answers questions using only the documents in the `da
 
 ## Part 1: Ingest
 
-Ingest prepares the documents so the app can search them. You start it with the command `corepack yarn ingest`. It does not run when the API starts. Run it once at the start, and again whenever the files in the `data` folder change.
+Ingest prepares the documents so the app can search them. You start it with the command `yarn ingest`. It does not run when the API starts. Run it once at the start, and again whenever the files in the `data` folder change.
 
 ### Ingest step 1: Read the files
 

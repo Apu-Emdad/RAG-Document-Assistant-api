@@ -2,7 +2,7 @@
 
 ## What you need
 
-To run this project you need Node 24, Yarn 4 through `corepack`, and Docker. Node 24 is required. If your terminal uses an older Node version, run `nvm use 24` inside the API folder first.
+To run this project you need Node 24, Yarn 4, and Docker. Run `corepack enable` once to set up Yarn 4. Node 24 is required. If your terminal uses an older Node version, run `nvm use 24` inside the API folder first.
 
 ## Docker services
 
@@ -18,7 +18,7 @@ The Postgres container is named `rag-document-assistant-postgres`. The Ollama co
 
 ## Starting Docker
 
-Run `corepack yarn docker:deps` inside the API folder to start Postgres and Ollama. The containers do not start by themselves when the computer boots, so you must start them each time you want to use the app.
+Run `yarn docker:deps` inside the API folder to start Postgres and Ollama. The containers do not start by themselves when the computer boots, so you must start them each time you want to use the app.
 
 ## Downloading the models
 
@@ -30,15 +30,15 @@ The models are downloaded once, and a Docker volume keeps them. Run these two co
 
 ## Creating the database table
 
-Run `corepack yarn migrate:dev` to apply the Prisma migrations. They turn on pgvector and create the `chunks` table. You only need to do this once.
+Run `yarn migrate:dev` to apply the Prisma migrations. They turn on pgvector and create the `chunks` table. You only need to do this once.
 
 ## Loading your documents
 
-Run `corepack yarn ingest` to read the files in the `data` folder and save their chunks. Run it again after you add, change, or delete a file in the `data` folder.
+Run `yarn ingest` to read the files in the `data` folder and save their chunks. Run it again after you add, change, or delete a file in the `data` folder.
 
 ## Starting the API
 
-Run `corepack yarn dev` to start the API on port 5000. You can then open the API documentation at `http://localhost:5000/docs`, and check that the API is running at `http://localhost:5000/health`.
+Run `yarn dev` to start the API on port 5000. You can then open the API documentation at `http://localhost:5000/docs`, and check that the API is running at `http://localhost:5000/health`.
 
 ## Stopping everything
 

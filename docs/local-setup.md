@@ -19,11 +19,11 @@ The containers don't start by themselves when the computer boots.
 ## Daily use
 
 ```bash
-corepack yarn docker:deps
+yarn docker:deps
 ```
 
 ```bash
-corepack yarn dev
+yarn dev
 ```
 
 When you are done, stop the API with Ctrl+C, then stop the containers:
@@ -51,7 +51,7 @@ If you change `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` or `POSTGRES_P
 Add, change or delete `.md` and `.txt` files in `data/`, then run:
 
 ```bash
-corepack yarn ingest
+yarn ingest
 ```
 
 Ingest deletes all saved chunks and saves them again. Run it again too if you change the chunk size or the embedding model.

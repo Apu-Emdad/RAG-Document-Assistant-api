@@ -61,10 +61,14 @@ nvm use 24
 **2. Install the packages**
 
 ```bash
-corepack yarn install
+corepack enable
 ```
 
-Use `corepack yarn`, not plain `yarn`, so the project's Yarn 4 is used.
+```bash
+yarn install
+```
+
+Run `corepack enable` once for Node 24. It makes `yarn` use the project's Yarn 4.
 
 **3. Create the settings file**
 
@@ -75,7 +79,7 @@ cp .env.example .env
 **4. Start Postgres and Ollama in Docker**
 
 ```bash
-corepack yarn docker:deps
+yarn docker:deps
 ```
 
 **5. Download the two models**
@@ -95,13 +99,13 @@ docker exec rag-document-assistant-ollama ollama pull llama3.2
 You only do this once. It turns on pgvector and creates the `chunks` table.
 
 ```bash
-corepack yarn migrate:dev
+yarn migrate:dev
 ```
 
 **7. Load the documents**
 
 ```bash
-corepack yarn ingest
+yarn ingest
 ```
 
 Run it again after you add, change or delete a file in `data/`. It replaces all saved chunks.
@@ -109,7 +113,7 @@ Run it again after you add, change or delete a file in `data/`. It replaces all 
 **8. Start the API**
 
 ```bash
-corepack yarn dev
+yarn dev
 ```
 
 The API runs at `http://localhost:5000`, with Swagger docs at `http://localhost:5000/docs`.
@@ -173,17 +177,17 @@ The response has this shape. Without a supported GPU, it can take up to about a 
 
 ## Scripts
 
-| Command                     | What it does                                     |
-| --------------------------- | ------------------------------------------------ |
-| `corepack yarn dev`         | Start the API in watch mode                      |
-| `corepack yarn docker:deps` | Start Postgres and Ollama                        |
-| `corepack yarn migrate:dev` | Apply or create database migrations              |
-| `corepack yarn ingest`      | Read `data/` and save the chunks                 |
-| `corepack yarn build`       | Compile to `dist/`                               |
-| `corepack yarn lint`        | Run oxlint                                       |
-| `corepack yarn typecheck`   | Check the TypeScript types                       |
-| `corepack yarn test`        | Run unit tests                                   |
-| `corepack yarn test:e2e`    | Run end-to-end tests with fake Prisma and Ollama |
+| Command            | What it does                                     |
+| ------------------ | ------------------------------------------------ |
+| `yarn dev`         | Start the API in watch mode                      |
+| `yarn docker:deps` | Start Postgres and Ollama                        |
+| `yarn migrate:dev` | Apply or create database migrations              |
+| `yarn ingest`      | Read `data/` and save the chunks                 |
+| `yarn build`       | Compile to `dist/`                               |
+| `yarn lint`        | Run oxlint                                       |
+| `yarn typecheck`   | Check the TypeScript types                       |
+| `yarn test`        | Run unit tests                                   |
+| `yarn test:e2e`    | Run end-to-end tests with fake Prisma and Ollama |
 
 ## Project structure
 
@@ -205,34 +209,6 @@ src/
   ingest.ts     the ingest script
 test/           end-to-end tests
 ```
-
-## Learnings
-
-### What broke
-
-- `migrate:dev` failed when it ran outside the API folder, because Yarn 1 was used instead of the project's Yarn 4. Run it inside the API folder with `corepack yarn`.
-- `migrate:dev` failed with error `P1001` (can't reach the database) when the containers were stopped. Start them first with `corepack yarn docker:deps`.
-
-### What changed
-
-- The project started from a NestJS starter. Its login, users, Redis and email code was deleted, because nothing here used it.
-- Ollama runs in Docker, so one command frees its memory when the app is not in use.
-- Prisma turns on pgvector through `extensions = [vector]` in `schema.prisma`, so no handwritten SQL file is needed.
-- The sample documents describe this project, so the answers are easy to check.
-
-### Test results
-
-These tests have not been run yet with the real models. Fill in the last column after running them.
-
-| #   | Question                               | Expected answer | Result  |
-| --- | -------------------------------------- | --------------- | ------- |
-| 1   | What port does the API use?            | 5000            | Not run |
-| 2   | Which model writes the answers?        | `llama3.2`      | Not run |
-| 3   | How long is a chunk?                   | 500 characters  | Not run |
-| 4   | How many characters do chunks overlap? | 50              | Not run |
-| 5   | What is the capital of France?         | I don't know    | Not run |
-
-Question 5 is not in the documents, so it checks that the model doesn't use outside knowledge.
 
 ## License
 
