@@ -1,88 +1,79 @@
 # Local Setup
 
-## Requirements
+The first-time steps are in the [README](../README.md#run-it). This page is for daily use and details.
 
-- Node 24 (`nvm use` reads `.nvmrc`)
-- Corepack enabled (`corepack enable`), which provides Yarn 4
-- Docker with Compose
-
-## Run with Docker
-
-Only Docker is needed:
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-This builds the API image and starts PostgreSQL, Redis, a one-off `migrate` job and the API. `migrate` applies the migrations and runs the seed, then exits; the API starts after it succeeds. The API listens on `PORT` from `.env`, with the Swagger docs at `/docs`. The logs stream in the terminal; press Ctrl+C to stop everything.
-
-Inside Docker the API reaches PostgreSQL and Redis by service name (`postgres:5432`, `redis:6379`), so `docker-compose.yml` overrides `DATABASE_URL`, `REDIS_HOST` and `REDIS_PORT` from `.env` for the API and `migrate`.
-
-## Run for development
-
-```bash
-nvm use
-yarn install
-cp .env.example .env
-docker compose up -d --wait postgres redis
-yarn migrate:deploy
-yarn db:seed
-yarn dev
-```
-
-`yarn migrate:deploy` (`prisma migrate deploy`) applies the migrations in `prisma/migrations`. After changing `prisma/schema.prisma`, create a migration with `yarn migrate:dev --create-only --name <name>`, review the SQL, then apply it with `yarn migrate:dev`. `yarn dev`, `yarn build` and `yarn test:e2e` generate the Prisma client into `src/generated/prisma` first; run `yarn prisma:generate` to do it on its own (Yarn doesn't run install scripts, so it isn't generated on `yarn install`).
-
-`yarn db:seed` creates the `USER` and `SUPER_ADMIN` roles, the example teams, 40 example employees (each with the password `12345678`), then the first super admin: user name `admin`, email `admin@example.com`, password `12345678`. It does nothing if that user name or email already exists, so it is safe to run again. Change the password after the first login on any shared or hosted database.
-
-`docker compose up -d --wait postgres redis` starts only PostgreSQL and Redis (Redis stores the active refresh tokens). Data is kept in named volumes, so it survives `docker compose down`; `docker compose down -v` deletes it.
-
-The app validates `.env` on startup and exits with a list of the missing or invalid variables.
-
-## Email (SMTP)
-
-The API sends the verify email and reset password emails over SMTP with nodemailer. Set these in `.env`:
-
-| Variable    | What it is                                                                                    |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| `SMTP_HOST` | SMTP server, e.g. `smtp-relay.brevo.com`                                                      |
-| `SMTP_PORT` | `587` (STARTTLS, default) or `465` (TLS)                                                      |
-| `SMTP_USER` | SMTP login                                                                                    |
-| `SMTP_PASS` | SMTP password or key. Keep it only in `.env`, never in `.env.example`                         |
-| `MAIL_FROM` | Sender, e.g. `My App <no-reply@example.com>`. Most providers only send from a verified sender |
-| `WEB_URL`   | Base URL of the web app; the links in emails point there. Default `http://localhost:5001`     |
-
-With [Brevo](https://www.brevo.com) (free plan): verify a sender under **Senders, domains and IPs**, then take the login and an SMTP key from **SMTP and API → SMTP**. Use `smtp-relay.brevo.com` and port `587`.
-
-The API starts without connecting to SMTP. If an email fails, the error is logged (never the SMTP password). Registration and forgot password still succeed; resend verification returns a 500 so the user can try again.
-
-To try the flows without a real provider, run a local SMTP inbox such as [Mailpit](https://mailpit.axllent.org) (`docker run -p 1025:1025 -p 8025:8025 axllent/mailpit`), set `SMTP_HOST=localhost`, `SMTP_PORT=1025`, any `SMTP_USER` and `SMTP_PASS`, and open `http://localhost:8025`.
-
-Rate limits: forgot password and resend verification allow 5 requests per 15 minutes per email and per IP, counted in Redis. The IP is `req.ip`; behind a proxy, enable Express `trust proxy` so it is the client's IP.
+Run every command inside the API folder, with Node 24 (`nvm use` reads `.nvmrc`).
 
 ## Services
 
-| Service | Host port | Container |
-| --- | --- | --- |
-| PostgreSQL 18 | `5433` | `nestjs-starter-pack-postgres` |
-| Redis 8 | `6381` | `nestjs-starter-pack-redis` |
-| API | `5000` (`PORT`) | `nestjs-starter-pack-api` |
-| Migrations and seed (one-off) | none | `nestjs-starter-pack-migrate` |
+Docker runs only Postgres and Ollama. The API runs directly on your computer.
 
-Host ports are set in `.env` (`POSTGRES_PORT`, `REDIS_PORT`). They avoid 5432 and 6379 so they don't clash with a locally installed PostgreSQL or Redis. Change them if they clash with another project.
+| Service                   | Port on your computer    | Container                         |
+| ------------------------- | ------------------------ | --------------------------------- |
+| Postgres 18 with pgvector | `5433` (`POSTGRES_PORT`) | `rag-document-assistant-postgres` |
+| Ollama                    | `11434`                  | `rag-document-assistant-ollama`   |
+| API                       | `5000` (`PORT`)          | none                              |
 
-`REDIS_DB` is the Redis database number (0 to 15). Two apps can share one Redis server if they use different numbers, so their keys don't mix.
+The containers don't start by themselves when the computer boots.
 
-## Connect with DataGrip
+## Daily use
 
-New data source → PostgreSQL:
+```bash
+corepack yarn docker:deps
+```
 
-| Field | Value |
-| --- | --- |
-| Host | `localhost` |
-| Port | `5433` (`POSTGRES_PORT`) |
-| Database | `starter_db` (`POSTGRES_DB`) |
-| User | `admin` (`POSTGRES_USER`) |
+```bash
+corepack yarn dev
+```
+
+When you are done, stop the API with Ctrl+C, then stop the containers:
+
+```bash
+docker compose stop
+```
+
+## Settings
+
+The API checks `.env` on startup and exits with a list of the missing or invalid values.
+
+| Variable       | What it is                               | Default                  |
+| -------------- | ---------------------------------------- | ------------------------ |
+| `NODE_ENV`     | `development`, `test` or `production`    | `development`            |
+| `PORT`         | Port of the API                          | `5000`                   |
+| `DATABASE_URL` | Postgres connection. Required            | None                     |
+| `WEB_ORIGIN`   | The only website allowed to call the API | `http://localhost:5001`  |
+| `OLLAMA_URL`   | Address of Ollama                        | `http://localhost:11434` |
+
+If you change `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` or `POSTGRES_PORT`, update `DATABASE_URL` to match.
+
+## Changing the documents
+
+Add, change or delete `.md` and `.txt` files in `data/`, then run:
+
+```bash
+corepack yarn ingest
+```
+
+Ingest deletes all saved chunks and saves them again. Run it again too if you change the chunk size or the embedding model.
+
+## Saved data
+
+Your chunks and the models are kept in Docker volumes, so `docker compose stop` and `docker compose down` don't delete them.
+
+This command deletes both the chunks and the models:
+
+```bash
+docker compose down -v
+```
+
+## Connect with a database client
+
+| Field    | Value                         |
+| -------- | ----------------------------- |
+| Host     | `localhost`                   |
+| Port     | `5433` (`POSTGRES_PORT`)      |
+| Database | `starter_db` (`POSTGRES_DB`)  |
+| User     | `admin` (`POSTGRES_USER`)     |
 | Password | `admin` (`POSTGRES_PASSWORD`) |
 
-Or paste the URL: `jdbc:postgresql://localhost:5433/starter_db`
+Or use this URL: `jdbc:postgresql://localhost:5433/starter_db`

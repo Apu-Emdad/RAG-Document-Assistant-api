@@ -1,230 +1,238 @@
-# NestJS Starter Pack
+# RAG Document Assistant API
 
-[![CI](https://github.com/Apu-Emdad/nestjs-starter-pack/actions/workflows/ci.yml/badge.svg)](https://github.com/Apu-Emdad/nestjs-starter-pack/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A NestJS API starter with authentication, users and roles already built, so a new project starts with features instead of boilerplate. It runs with one command in Docker and comes with tests and CI.
+A small API that answers questions about your own documents. Everything runs on your computer, so no paid AI service is needed.
 
-## Features
+It uses RAG (Retrieval-Augmented Generation): the app first finds the parts of your documents that match the question, then an AI model writes an answer using only those parts.
 
-- **Auth:** register and log in with username or email. Short-lived JWT access tokens, and rotating refresh tokens in an `httpOnly` cookie, tracked in Redis. Reusing an old refresh token revokes all of that user's sessions.
-- **Account self-service:** email verification (optional: unverified users can still log in), forgot and reset password, and a profile to change the user name, email and password. Email links work once and only their SHA-256 hash is stored. Resetting or changing the password logs out the other sessions. Emails go out over SMTP with nodemailer, and the email endpoints are rate limited in Redis.
-- **Roles:** `USER` and `SUPER_ADMIN`, with `@Public()` and `@Roles()` decorators and global guards. Every route needs a login unless it is marked public.
-- **User management:** list, search, filter, deactivate and delete users (super admin only).
-- **One response shape:** every response, success or error, is `{ status, message, data?, error?, context? }`. A global filter turns every thrown error into that shape and logs unexpected ones.
-- **Safe ids:** each row has an internal integer `id` and a random 10-character `uid`. Only the `uid` leaves the API.
-- **Validated config:** `.env` is checked on startup; the app exits with a list of the missing or invalid variables.
-- **API docs:** Swagger UI at `/docs`, with saved login and pinned tags.
-- **Docker:** a multi-stage Dockerfile and a Compose file that starts PostgreSQL, Redis, runs migrations and the seed, then starts the API.
-- **Quality:** unit and end-to-end tests with Vitest, oxlint, Prettier and a GitHub Actions workflow.
+## How it works
+
+**1. Ingest** runs once, and again when your documents change:
+
+- Reads every `.md` and `.txt` file in `data/`.
+- Splits each file into chunks of about 500 characters, with 50 characters of overlap.
+- `nomic-embed-text` turns each chunk into an embedding: a list of 768 numbers that represents its meaning.
+- Saves each chunk and its embedding in Postgres, using pgvector.
+
+**2. Retrieve** runs for every question:
+
+- `nomic-embed-text` turns the question into an embedding.
+- Postgres finds the 4 chunks closest in meaning.
+
+**3. Generate** runs only for `POST /ask`:
+
+- The question and the 4 chunks go to `llama3.2`, with this instruction: "Answer only from the context. If it's not there, say you don't know."
+- The API returns the answer and the chunks it used.
+
+`POST /search` stops after step 2. It is useful for checking which chunks a question finds, without waiting for `llama3.2`.
 
 ## Tech stack
 
-| Area             | Tools                                            |
-| ---------------- | ------------------------------------------------ |
-| Runtime          | Node.js 24, TypeScript                           |
-| Framework        | NestJS 12                                        |
-| Database         | PostgreSQL 18, Prisma 7                          |
-| Cache and tokens | Redis 8                                          |
-| Auth             | JWT, Argon2 password hashing                     |
-| Testing          | Vitest, Supertest                                |
-| Tooling          | Yarn 4, oxlint, Prettier, GitHub Actions, Docker |
+| Area      | Tools                                  |
+| --------- | -------------------------------------- |
+| Runtime   | Node.js 24, TypeScript                 |
+| Framework | NestJS 12                              |
+| Database  | PostgreSQL 18, pgvector, Prisma 7      |
+| AI models | Ollama, `nomic-embed-text`, `llama3.2` |
+| Testing   | Vitest, Supertest                      |
+| Tooling   | Yarn 4, oxlint, Prettier, Docker       |
 
-## Quick start
+## Requirements
 
-You only need [Docker](https://docs.docker.com/get-docker/).
-
-```bash
-git clone https://github.com/Apu-Emdad/nestjs-starter-pack.git my-api
-cd my-api
-cp .env.example .env
-docker compose up --build
-```
-
-This starts PostgreSQL, Redis and the API, applies the database migrations and creates the first super admin: user name `admin`, password `12345678`. Press Ctrl+C to stop everything.
-
-|                    | URL                            |
-| ------------------ | ------------------------------ |
-| API                | `http://localhost:5000`        |
-| API docs (Swagger) | `http://localhost:5000/docs`   |
-| Health check       | `http://localhost:5000/health` |
-
-Log in at `POST /auth/login` as `admin` with the password `12345678`. Change the secrets in `.env` and the super admin password before using it anywhere other than your own machine.
-
-## Installation
-
-Use this guide to start a new project from the starter. The quick start above is only for trying it out.
-
-### 1. Requirements
-
-- Node.js 24 (with [nvm](https://github.com/nvm-sh/nvm): `nvm install 24`)
-- Corepack, which ships with Node and provides Yarn 4: `corepack enable`
+- Node.js 24
 - Docker with Compose
+- At least 5 GB of free memory, because `llama3.2` needs about 3 to 4 GB while it is loaded
+- About 3 GB of free disk space for the two models
 
-### 2. Create your project
+## Run it
 
-Click **Use this template** on GitHub to create a new repository, then clone it:
+Run every command inside the API folder.
 
-```bash
-git clone git@github.com:<you>/<your-project>.git
-cd <your-project>
-```
-
-Or copy the starter without its git history:
+**1. Get the code and use Node 24**
 
 ```bash
-git clone --depth 1 https://github.com/Apu-Emdad/nestjs-starter-pack.git <your-project>
-cd <your-project>
-rm -rf .git && git init -b main
+git clone https://github.com/Apu-Emdad/RAG-Document-Assistant-api.git
+cd RAG-Document-Assistant-api
+nvm install 24
+nvm use 24
 ```
 
-### 3. Rename the project
-
-| What                   | Where                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------- |
-| Package name           | `name` and `description` in `package.json`                                                     |
-| Compose project        | `name` and every `container_name` / `image` in `docker-compose.yml`                            |
-| Database name and user | `POSTGRES_*` and `DATABASE_URL` in `.env.example`                                              |
-| Ports                  | `PORT`, `POSTGRES_PORT` and `REDIS_PORT` in `.env.example`, if they clash with another project |
-| API docs title         | `setTitle` and `setDescription` in `src/main.ts`                                               |
-| Docs and license       | This README, `docs/`, and the copyright line in `LICENSE`                                      |
-
-### 4. Install dependencies
+**2. Install the packages**
 
 ```bash
-nvm use
-yarn install
+corepack yarn install
 ```
 
-`yarn install` also updates `yarn.lock` with the new package name.
+Use `corepack yarn`, not plain `yarn`, so the project's Yarn 4 is used.
 
-### 5. Configure the environment
+**3. Create the settings file**
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env`:
-
-- **JWT secrets:** set `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` to two different random values of at least 32 characters. Generate each one with `openssl rand -base64 48`.
-- **Web app origin:** set `WEB_ORIGIN` to your frontend's URL, so CORS lets it send the refresh cookie.
-- **Web app URL:** set `WEB_URL` to your frontend's base URL. The links in emails point there (`<WEB_URL>/verify-email?token=...`, `<WEB_URL>/reset-password?token=...`).
-- **Email (SMTP):** set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` and `MAIL_FROM`. Any SMTP provider works; see [Email (SMTP)](docs/local-setup.md#email-smtp).
-- **Database:** if you change `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` or `POSTGRES_PORT`, update `DATABASE_URL` to match.
-
-The app checks `.env` on startup and exits with a list of the missing or invalid variables.
-
-### 6. Start PostgreSQL and Redis
+**4. Start Postgres and Ollama in Docker**
 
 ```bash
-docker compose up -d --wait postgres redis
+corepack yarn docker:deps
 ```
 
-### 7. Set up the database
+**5. Download the two models**
+
+You only do this once. Docker keeps them in a volume.
 
 ```bash
-yarn migrate:deploy
-yarn db:seed
+docker exec rag-document-assistant-ollama ollama pull nomic-embed-text
 ```
-
-- `yarn migrate:deploy` creates the tables.
-- `yarn db:seed` creates the `USER` and `SUPER_ADMIN` roles, the example teams, 40 example employees and the super admin `admin` with the password `12345678`. It skips the user if the user name or email already exists, so it is safe to run again. Change the password after the first login.
-
-### 8. Run the API
 
 ```bash
-yarn dev
+docker exec rag-document-assistant-ollama ollama pull llama3.2
 ```
 
-Open `http://localhost:5000/docs` and log in at `POST /auth/login` as `admin` with the password `12345678`.
+**6. Create the database table**
 
-### 9. Commit your starting point
+You only do this once. It turns on pgvector and creates the `chunks` table.
 
 ```bash
-git add -A
-git commit -m "chore: start from nestjs-starter-pack"
+corepack yarn migrate:dev
 ```
 
-### Next steps
+**7. Load the documents**
 
-- **Add a module:** `yarn nest g resource modules/<name>`, then follow the patterns in `src/modules/users` (services return a `Result`, controllers send it with `res.status(result.status).json(result)`).
-- **Add a table:** see [Adding a table](docs/schema.md#adding-a-table).
-- **Run everything in Docker:** `docker compose up --build` runs migrations, the seed and the API in containers. Stop `yarn dev` first, since both use `PORT`.
+```bash
+corepack yarn ingest
+```
 
-More detail on services, ports and connecting a database client is in [docs/local-setup.md](docs/local-setup.md).
+Run it again after you add, change or delete a file in `data/`. It replaces all saved chunks.
 
-## Scripts
+**8. Start the API**
 
-| Command               | What it does                                           |
-| --------------------- | ------------------------------------------------------ |
-| `yarn dev`            | Start the API in watch mode                            |
-| `yarn build`          | Generate the Prisma client and compile to `dist/`      |
-| `yarn lint`           | Run oxlint                                             |
-| `yarn typecheck`      | Type-check the whole project                           |
-| `yarn test`           | Run unit tests                                         |
-| `yarn test:e2e`       | Run end-to-end tests                                   |
-| `yarn test:cov`       | Run unit tests with coverage                           |
-| `yarn migrate:dev`    | Create and apply a migration after changing the schema |
-| `yarn migrate:deploy` | Apply pending migrations                               |
-| `yarn db:seed`        | Create the first super admin                           |
-| `yarn docker:deps`    | Start PostgreSQL and Redis, apply migrations and seed  |
+```bash
+corepack yarn dev
+```
+
+The API runs at `http://localhost:5000`, with Swagger docs at `http://localhost:5000/docs`.
+
+**9. Stop the containers when you are done**
+
+```bash
+docker compose stop
+```
+
+This frees the memory. Your chunks and models are kept. Next time, you only need steps 4 and 8.
+
+More detail is in [docs/local-setup.md](docs/local-setup.md).
 
 ## API
 
-| Endpoint                         | Access         | What it does                                      |
-| -------------------------------- | -------------- | ------------------------------------------------- |
-| `POST /auth/register`            | Public         | Create a `USER` account and log in                |
-| `POST /auth/login`               | Public         | Log in with username or email                     |
-| `POST /auth/refresh`             | Refresh cookie | Get a new access token; rotates the refresh token |
-| `POST /auth/logout`              | Refresh cookie | Revoke the refresh token and clear the cookie     |
-| `GET /auth/me`                   | Logged in      | The current user, with `emailVerified`            |
-| `POST /auth/verify-email`        | Public         | Verify the email with the token from the link     |
-| `POST /auth/resend-verification` | Logged in      | Send a new verify link (5 per 15 minutes)         |
-| `POST /auth/forgot-password`     | Public         | Email a reset link (5 per 15 minutes)             |
-| `POST /auth/reset-password`      | Public         | Set a new password and log out every session      |
-| `PATCH /profile`                 | Logged in      | Change your user name and email                   |
-| `PATCH /profile/password`        | Logged in      | Change your password; other sessions log out      |
-| `GET /users`                     | Super admin    | List users, with search, role and status filters  |
-| `GET /users/:uid`                | Super admin    | One user                                          |
-| `PATCH /users/deactivate/:uid`   | Super admin    | Deactivate a user and revoke their sessions       |
-| `DELETE /users/:uid`             | Super admin    | Delete a user and revoke their sessions           |
-| `GET /teams`                     | Super admin    | List teams, optionally for one department         |
-| `GET /employees`                 | Super admin    | List employees, with search and filters           |
-| `GET /employees/:uid`            | Super admin    | One employee                                      |
-| `POST /employees`                | Super admin    | Create an employee and their login                |
-| `PATCH /employees/:uid`          | Super admin    | Update an employee                                |
-| `DELETE /employees/:uid`         | Super admin    | Delete an employee and their login                |
-| `GET /health`                    | Public         | Health check                                      |
+There is no login, so only run this on your own computer.
 
-Full request and response details are in Swagger at `/docs`.
+| Endpoint       | What it does                               |
+| -------------- | ------------------------------------------ |
+| `GET /health`  | Checks that the API is running             |
+| `POST /search` | Returns the 4 chunks closest to a question |
+| `POST /ask`    | Returns an answer and its source chunks    |
+
+### Example: search
+
+```bash
+curl -X POST http://localhost:5000/search -H 'Content-Type: application/json' -d '{"question": "What is ingest?"}'
+```
+
+The response has this shape, with 4 chunks:
+
+```json
+{
+  "status": 200,
+  "message": "Chunks found",
+  "data": {
+    "chunks": [{ "content": "The text of the chunk", "source": "glossary.md" }]
+  }
+}
+```
+
+### Example: ask
+
+```bash
+curl -X POST http://localhost:5000/ask -H 'Content-Type: application/json' -d '{"question": "What is ingest?"}'
+```
+
+The response has this shape. Without a supported GPU, it can take up to about a minute.
+
+```json
+{
+  "status": 200,
+  "message": "Answer created",
+  "data": {
+    "answer": "The answer written by llama3.2",
+    "sources": [{ "content": "The text of the chunk", "source": "glossary.md" }]
+  }
+}
+```
+
+## Scripts
+
+| Command                     | What it does                                     |
+| --------------------------- | ------------------------------------------------ |
+| `corepack yarn dev`         | Start the API in watch mode                      |
+| `corepack yarn docker:deps` | Start Postgres and Ollama                        |
+| `corepack yarn migrate:dev` | Apply or create database migrations              |
+| `corepack yarn ingest`      | Read `data/` and save the chunks                 |
+| `corepack yarn build`       | Compile to `dist/`                               |
+| `corepack yarn lint`        | Run oxlint                                       |
+| `corepack yarn typecheck`   | Check the TypeScript types                       |
+| `corepack yarn test`        | Run unit tests                                   |
+| `corepack yarn test:e2e`    | Run end-to-end tests with fake Prisma and Ollama |
 
 ## Project structure
 
 ```
+data/           the documents the app answers from
+prisma/         database schema and migrations
 src/
-  common/       decorators, error filter and logger, Result interface, constants
-  config/       environment validation
+  common/       error filter and logger, Result interface
+  config/       checks the .env values on startup
   health/       health check
-  modules/
-    auth/       register, login, refresh tokens, guards, email verification, password reset
-    profile/    change your own user name, email and password
-    users/      user management
   infra/
-    prisma/     Prisma client as a Nest service
-    redis/      Redis client and rate limits as Nest services
-    mail/       SMTP emails (nodemailer) and their templates
-  swagger/      Swagger UI tweaks
-prisma/
-  schema.prisma database schema (roles, users, email tokens, teams, employees)
-  migrations/   SQL migrations
-  seed.ts       creates the first super admin
+    ollama/     calls to the Ollama models
+    prisma/     database client
+  modules/
+    ingest/     splits documents and saves the chunks
+    search/     POST /search
+    ask/        POST /ask
+  swagger/      Swagger UI changes
+  ingest.ts     the ingest script
 test/           end-to-end tests
 ```
 
-## Documentation
+## Learnings
 
-- [Local setup](docs/local-setup.md): running the project, services and ports
-- [Database schema](docs/schema.md): tables, conventions and how to add a table
+### What broke
+
+- `migrate:dev` failed when it ran outside the API folder, because Yarn 1 was used instead of the project's Yarn 4. Run it inside the API folder with `corepack yarn`.
+- `migrate:dev` failed with error `P1001` (can't reach the database) when the containers were stopped. Start them first with `corepack yarn docker:deps`.
+
+### What changed
+
+- The project started from a NestJS starter. Its login, users, Redis and email code was deleted, because nothing here used it.
+- Ollama runs in Docker, so one command frees its memory when the app is not in use.
+- Prisma turns on pgvector through `extensions = [vector]` in `schema.prisma`, so no handwritten SQL file is needed.
+- The sample documents describe this project, so the answers are easy to check.
+
+### Test results
+
+These tests have not been run yet with the real models. Fill in the last column after running them.
+
+| #   | Question                               | Expected answer | Result  |
+| --- | -------------------------------------- | --------------- | ------- |
+| 1   | What port does the API use?            | 5000            | Not run |
+| 2   | Which model writes the answers?        | `llama3.2`      | Not run |
+| 3   | How long is a chunk?                   | 500 characters  | Not run |
+| 4   | How many characters do chunks overlap? | 50              | Not run |
+| 5   | What is the capital of France?         | I don't know    | Not run |
+
+Question 5 is not in the documents, so it checks that the model doesn't use outside knowledge.
 
 ## License
 
