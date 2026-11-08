@@ -130,8 +130,6 @@ More detail is in [docs/local-setup.md](docs/local-setup.md).
 
 ## API
 
-There is no login, so only run this on your own computer.
-
 | Endpoint       | What it does                               |
 | -------------- | ------------------------------------------ |
 | `GET /health`  | Checks that the API is running             |
