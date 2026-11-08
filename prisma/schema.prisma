@@ -1,0 +1,111 @@
+// Design and rationale: docs/schema.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id              BigInt   @id @default(autoincrement())
+  uid             String   @unique @default(dbgenerated("generate_uid()"))
+  name            String   @unique
+  rolePermissions Json?    @map("role_permissions")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id              BigInt    @id @default(autoincrement())
+  uid             String    @unique @default(dbgenerated("generate_uid()"))
+  userName        String    @unique @map("user_name")
+  email           String    @unique
+  passwordHash    String    @map("password_hash")
+  roleId          BigInt    @map("role_id")
+  isActive        Boolean   @default(true) @map("is_active")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  roleInfo     Role         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  employeeInfo Employee?
+  emailTokens  EmailToken[]
+
+  @@map("users")
+}
+
+enum EmailTokenType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+model EmailToken {
+  id        BigInt         @id @default(autoincrement())
+  uid       String         @unique @default(dbgenerated("generate_uid()"))
+  userId    BigInt         @map("user_id")
+  type      EmailTokenType
+  tokenHash String         @unique @map("token_hash")
+  expiresAt DateTime       @map("expires_at")
+  usedAt    DateTime?      @map("used_at")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  userInfo User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@map("email_tokens")
+}
+
+enum Department {
+  ENGINEERING
+  DESIGN
+  SALES
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+}
+
+model Team {
+  id         BigInt     @id @default(autoincrement())
+  uid        String     @unique @default(dbgenerated("generate_uid()"))
+  name       String     @unique
+  department Department
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  employees Employee[]
+
+  @@index([department])
+  @@map("teams")
+}
+
+model Employee {
+  id             BigInt         @id @default(autoincrement())
+  uid            String         @unique @default(dbgenerated("generate_uid()"))
+  userId         BigInt         @unique @map("user_id")
+  teamId         BigInt         @map("team_id")
+  fullName       String         @map("full_name")
+  bio            String?
+  salary         Int
+  skills         String[]
+  employmentType EmploymentType @map("employment_type")
+  joinDate       DateTime       @map("join_date") @db.Date
+  isRemote       Boolean        @default(false) @map("is_remote")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  userInfo User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamInfo Team @relation(fields: [teamId], references: [id], onDelete: Restrict)
+
+  @@index([teamId])
+  @@map("employees")
+}
