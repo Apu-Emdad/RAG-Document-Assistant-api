@@ -68,7 +68,7 @@ jobs:
         run: yarn test
 
       - name: E2E tests
-        run: yarn test:e2e # Prisma and Redis are faked, no database needed
+        run: yarn test:e2e # Prisma and Ollama are faked, no database needed
 
       - name: Build
         run: yarn build

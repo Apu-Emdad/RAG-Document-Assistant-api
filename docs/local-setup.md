@@ -68,12 +68,12 @@ docker compose down -v
 
 ## Connect with a database client
 
-| Field    | Value                         |
-| -------- | ----------------------------- |
-| Host     | `localhost`                   |
-| Port     | `5433` (`POSTGRES_PORT`)      |
-| Database | `starter_db` (`POSTGRES_DB`)  |
-| User     | `admin` (`POSTGRES_USER`)     |
-| Password | `admin` (`POSTGRES_PASSWORD`) |
+| Field    | Value                                |
+| -------- | ------------------------------------ |
+| Host     | `localhost`                          |
+| Port     | `5433` (`POSTGRES_PORT`)             |
+| Database | `document-assistant` (`POSTGRES_DB`) |
+| User     | `admin` (`POSTGRES_USER`)            |
+| Password | `admin` (`POSTGRES_PASSWORD`)        |
 
-Or use this URL: `jdbc:postgresql://localhost:5433/starter_db`
+Or use this URL: `jdbc:postgresql://localhost:5433/document-assistant`
