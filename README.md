@@ -8,6 +8,26 @@ It uses RAG (Retrieval-Augmented Generation): the app first finds the parts of y
 
 ## How it works
 
+```mermaid
+flowchart TD
+    subgraph Ingest
+        files["Files in data/"] --> chunks["Split into chunks"]
+        chunks --> embedChunks["nomic-embed-text"]
+    end
+
+    embedChunks -- "768 numbers for each chunk" --> db[("Postgres with pgvector")]
+
+    subgraph Question
+        question["Your question"] --> embedQuestion["nomic-embed-text"]
+        embedQuestion -- "768 numbers" --> closest["Find the 4 closest chunks"]
+        closest -- "4 chunks" --> llama["llama3.2"]
+        question -- "question text" --> llama
+        llama --> answer["Answer and source chunks"]
+    end
+
+    db --> closest
+```
+
 **1. Ingest** runs once, and again when your documents change:
 
 - Reads every `.md` and `.txt` file in `data/`.
