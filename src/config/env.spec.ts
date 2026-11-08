@@ -35,9 +35,10 @@ describe('validateEnv', () => {
     });
   });
 
-  it('throws when the SMTP settings are missing', () => {
-    const { SMTP_HOST: _host, SMTP_PASS: _pass, ...withoutSmtp } = validEnv;
-    expect(() => validateEnv(withoutSmtp)).toThrow(/SMTP_HOST[\s\S]*SMTP_PASS/);
+  it('does not require Redis, JWT or SMTP settings', () => {
+    expect(() =>
+      validateEnv({ DATABASE_URL: validEnv.DATABASE_URL }),
+    ).not.toThrow();
   });
 
   it('rejects an invalid WEB_URL', () => {
@@ -46,10 +47,8 @@ describe('validateEnv', () => {
     );
   });
 
-  it('throws and names every missing variable', () => {
-    expect(() => validateEnv({})).toThrow(
-      /DATABASE_URL[\s\S]*REDIS_HOST[\s\S]*REDIS_PORT/,
-    );
+  it('throws when DATABASE_URL is missing', () => {
+    expect(() => validateEnv({})).toThrow(/DATABASE_URL/);
   });
 
   it('rejects a non-postgres DATABASE_URL', () => {
