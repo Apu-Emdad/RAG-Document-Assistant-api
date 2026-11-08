@@ -16,6 +16,9 @@ export class Env {
   // Origin of the web app, allowed by CORS
   @IsUrl({ require_tld: false })
   WEB_ORIGIN: string = 'http://localhost:5001';
+
+  @IsUrl({ require_tld: false })
+  OLLAMA_URL: string = 'http://localhost:11434';
 }
 
 // Used by ConfigModule: throws on startup when a variable is missing or invalid.

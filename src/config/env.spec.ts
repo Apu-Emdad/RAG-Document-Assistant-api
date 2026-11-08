@@ -11,6 +11,7 @@ describe('validateEnv', () => {
       PORT: 5000,
       DATABASE_URL: validEnv.DATABASE_URL,
       WEB_ORIGIN: 'http://localhost:5001',
+      OLLAMA_URL: 'http://localhost:11434',
     });
   });
 
