@@ -1,7 +1,6 @@
 /**
  * Injected into the Swagger UI page through SwaggerModule.setup options.
- * Adds a fixed left sidebar listing every tag, with pinning saved in localStorage,
- * and authorizes Swagger automatically after a register, login or refresh call.
+ * Adds a fixed left sidebar listing every tag, with pinning saved in localStorage.
  */
 
 export const SWAGGER_CUSTOM_CSS = `
@@ -121,39 +120,5 @@ export const SWAGGER_CUSTOM_JS = `
     };
 
     buildNav();
-
-    /**
-     * Token automation: a successful register, login or refresh from "Try it out" authorizes Swagger,
-     * and the token is restored after a page reload.
-     */
-    const AUTH_KEY = 'swagger-auth';
-    const authorize = (token) => {
-      if (token && window.ui) window.ui.preauthorizeApiKey('bearer', token);
-    };
-    const getStoredToken = () => {
-      try { return localStorage.getItem(AUTH_KEY); }
-      catch { return null; }
-    };
-    const setStoredToken = (token) => {
-      try { localStorage.setItem(AUTH_KEY, token); }
-      catch {}
-    };
-
-    authorize(getStoredToken());
-
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-      const res = await originalFetch(...args);
-      const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
-      if (/\\/auth\\/(login|register|refresh)$/.test(url) && res.ok) {
-        const body = await res.clone().json().catch(() => null);
-        const token = body?.data?.accessToken;
-        if (token) {
-          setStoredToken(token);
-          authorize(token);
-        }
-      }
-      return res;
-    };
   });
 `;
