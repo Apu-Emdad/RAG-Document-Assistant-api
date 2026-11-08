@@ -2,7 +2,7 @@
 
 ## The API at a glance
 
-The API has three endpoints: `GET /health`, `POST /search`, and `POST /ask`. It has no login and no tokens, so it should only run on your own computer.
+The API has three endpoints: `GET /health`, `POST /search`, and `POST /ask`.
 
 ## GET /health
 
