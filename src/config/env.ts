@@ -1,18 +1,6 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
-import {
-  IsIn,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsPositive,
-  IsString,
-  IsUrl,
-  Max,
-  Min,
-  MinLength,
-  validateSync,
-} from 'class-validator';
+import { IsIn, IsInt, IsPositive, IsUrl, validateSync } from 'class-validator';
 
 export class Env {
   @IsIn(['development', 'test', 'production'])
@@ -25,76 +13,9 @@ export class Env {
   @IsUrl({ protocols: ['postgres', 'postgresql'], require_tld: false })
   DATABASE_URL: string;
 
-  // Redis, JWT and SMTP values are optional while those features are turned off.
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  REDIS_HOST: string;
-
-  @IsOptional()
-  @IsInt()
-  @IsPositive()
-  REDIS_PORT: number;
-
-  // Redis database number (0 to 15). Apps that share one Redis server use different numbers.
-  @IsInt()
-  @Min(0)
-  @Max(15)
-  REDIS_DB: number = 0;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(32)
-  JWT_ACCESS_SECRET: string;
-
-  // Seconds until an access token expires
-  @IsInt()
-  @IsPositive()
-  JWT_ACCESS_EXPIRES_IN: number = 900;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(32)
-  JWT_REFRESH_SECRET: string;
-
-  // Seconds until a refresh token expires
-  @IsInt()
-  @IsPositive()
-  JWT_REFRESH_EXPIRES_IN: number = 604800;
-
-  // Origin of the web app, allowed by CORS to send the refresh cookie
+  // Origin of the web app, allowed by CORS
   @IsUrl({ require_tld: false })
   WEB_ORIGIN: string = 'http://localhost:5001';
-
-  // Base URL of the web app, used for the links in emails
-  @IsUrl({ require_tld: false })
-  WEB_URL: string = 'http://localhost:5001';
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  SMTP_HOST: string;
-
-  // 465 uses TLS from the start; other ports (usually 587) upgrade with STARTTLS
-  @IsInt()
-  @IsPositive()
-  SMTP_PORT: number = 587;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  SMTP_USER: string;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  SMTP_PASS: string;
-
-  // Sender shown in emails, e.g. "My App <no-reply@example.com>"
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  MAIL_FROM: string;
 }
 
 // Used by ConfigModule: throws on startup when a variable is missing or invalid.
