@@ -23,6 +23,7 @@ async function bootstrap() {
     jsonDocumentUrl: `${DOCS_PATH}-json`,
     customCss: SWAGGER_CUSTOM_CSS,
     customJsStr: SWAGGER_CUSTOM_JS,
+    swaggerOptions: { displayRequestDuration: true },
   });
 
   const config = app.get<ConfigService<Env, true>>(ConfigService);
