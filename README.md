@@ -136,7 +136,7 @@ Run it again after you add, change or delete a file in `data/`. It replaces all 
 yarn dev
 ```
 
-The API runs at `http://localhost:5000`, with Swagger docs at `http://localhost:5000/docs`.
+The API runs at `http://localhost:5000`, with Swagger docs at `http://localhost:5000/api/docs`.
 
 **9. Stop the containers when you are done**
 
@@ -150,16 +150,18 @@ More detail is in [docs/local-setup.md](docs/local-setup.md).
 
 ## API
 
-| Endpoint       | What it does                               |
-| -------------- | ------------------------------------------ |
-| `GET /health`  | Checks that the API is running             |
-| `POST /search` | Returns the 4 chunks closest to a question |
-| `POST /ask`    | Returns an answer and its source chunks    |
+Every route starts with `/api`, so a reverse proxy can send `/api` to the API and everything else to the web app.
+
+| Endpoint           | What it does                               |
+| ------------------ | ------------------------------------------ |
+| `GET /api/health`  | Checks that the API is running             |
+| `POST /api/search` | Returns the 4 chunks closest to a question |
+| `POST /api/ask`    | Returns an answer and its source chunks    |
 
 ### Example: search
 
 ```bash
-curl -X POST http://localhost:5000/search -H 'Content-Type: application/json' -d '{"question": "What is ingest?"}'
+curl -X POST http://localhost:5000/api/search -H 'Content-Type: application/json' -d '{"question": "What is ingest?"}'
 ```
 
 The response has this shape, with 4 chunks:
@@ -177,7 +179,7 @@ The response has this shape, with 4 chunks:
 ### Example: ask
 
 ```bash
-curl -X POST http://localhost:5000/ask -H 'Content-Type: application/json' -d '{"question": "What is ingest?"}'
+curl -X POST http://localhost:5000/api/ask -H 'Content-Type: application/json' -d '{"question": "What is ingest?"}'
 ```
 
 The response has this shape. Without a supported GPU, it can take up to about a minute.
@@ -221,8 +223,8 @@ src/
     prisma/     database client
   modules/
     ingest/     splits documents and saves the chunks
-    search/     POST /search
-    ask/        POST /ask
+    search/     POST /api/search
+    ask/        POST /api/ask
   swagger/      Swagger UI changes
   ingest.ts     the ingest script
 test/           end-to-end tests

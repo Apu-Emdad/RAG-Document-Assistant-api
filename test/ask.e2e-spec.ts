@@ -1,14 +1,13 @@
-import { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
 import { configureApp } from './../src/app.setup.js';
 import { OllamaService } from '../src/infra/ollama/ollama.service.js';
 import { PrismaService } from '../src/infra/prisma/prisma.service.js';
 
 describe('Ask (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
   const rows = [
     { content: 'Ingest prepares documents', source: 'glossary.md' },
     { content: 'Chunks are small pieces', source: 'how-it-works.md' },
@@ -26,7 +25,7 @@ describe('Ask (e2e)', () => {
       .useValue({ embed, generate })
       .compile();
 
-    app = module.createNestApplication();
+    app = module.createNestApplication<NestExpressApplication>();
     configureApp(app);
     await app.init();
   });
@@ -37,7 +36,7 @@ describe('Ask (e2e)', () => {
 
   it('returns the answer and the source chunks', async () => {
     const response = await request(app.getHttpServer())
-      .post('/ask')
+      .post('/api/ask')
       .send({ question: '  What is ingest?  ' })
       .expect(200);
 
@@ -56,7 +55,7 @@ describe('Ask (e2e)', () => {
 
   it('rejects a blank question', async () => {
     const response = await request(app.getHttpServer())
-      .post('/ask')
+      .post('/api/ask')
       .send({ question: '   ' })
       .expect(400);
 

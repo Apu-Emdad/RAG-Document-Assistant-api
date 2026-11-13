@@ -1,14 +1,13 @@
-import { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module.js';
 import { configureApp } from './../src/app.setup.js';
 import { OllamaService } from '../src/infra/ollama/ollama.service.js';
 import { PrismaService } from '../src/infra/prisma/prisma.service.js';
 
 describe('Search (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
   const rows = [
     { content: 'Ingest prepares documents', source: 'glossary.md' },
   ];
@@ -24,7 +23,7 @@ describe('Search (e2e)', () => {
       .useValue({ embed })
       .compile();
 
-    app = module.createNestApplication();
+    app = module.createNestApplication<NestExpressApplication>();
     configureApp(app);
     await app.init();
   });
@@ -35,7 +34,7 @@ describe('Search (e2e)', () => {
 
   it('returns the closest chunks for a question', async () => {
     const response = await request(app.getHttpServer())
-      .post('/search')
+      .post('/api/search')
       .send({ question: '  What is ingest?  ' })
       .expect(200);
 
@@ -56,7 +55,7 @@ describe('Search (e2e)', () => {
     ['not text', { question: 5 }, 'Question must be text'],
   ])('rejects a question that is %s', async (_name, body, message) => {
     const response = await request(app.getHttpServer())
-      .post('/search')
+      .post('/api/search')
       .send(body)
       .expect(400);
 
